@@ -1,4 +1,5 @@
 NAME = cerebro
+DOCKERHUB_USR = willis7
 PWD := $(MKPATH:%/Makefile=%)
 
 .DEFAULT_GOAL := test
@@ -8,28 +9,26 @@ clean:
 	rm -rf vendor
 
 
-build:
-	go build -race -o $(NAME)
+build:	docker.check
+	docker build -t $(DOCKERHUB_USR)/$(NAME) .
 
-run:
-	./$(NAME)
+run:	docker.check
+	docker run --rm $(DOCKERHUB_USR)/$(NAME)
 
-test:
+test:	go.check
 	go test -race -v $(shell go list ./... | grep -v /vendor/)
 
-coverage:
+coverage:	go.check
 	go test -race -cover -v $(shell go list ./... | grep -v /vendor/)
 
-vet:
+vet:	go.check
 	go vet $(shell go list ./... | grep -v /vendor/)
 
-#staticcheck:
-#	go get -u honnef.co/go/staticcheck/cmd/staticcheck
-#	staticcheck $(shell go list ./... | grep -v /vendor/)
 
-lint:
+lint:	golint.check
 	golint $(shell go list ./... | grep -v /vendor/)
 
-#simple:
-#	go get -u honnef.co/go/simple/cmd/gosimple
-#    gosimple $(go list ./... | grep -v "vendor")
+
+# .check targets just tests for a command to be available on your PATH.
+%.check:
+	@which $*
