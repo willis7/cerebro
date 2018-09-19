@@ -1,19 +1,23 @@
 package environment
 
 import (
+	"database/sql"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/willis7/cerebro/test"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
-func TestRepository_Create(t *testing.T) {
+func setupRepoTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, repository) {
 	mockDB, mock, sqlxDB := test.NewMockSqlxDB(t)
-	defer mockDB.Close()
+	repo := NewRepository(sqlxDB)
+	return mockDB, mock, *repo
+}
 
-	repo := repository{
-		db: sqlxDB,
-	}
+func TestRepository_Create(t *testing.T) {
+	mockDB, mock, repo := setupRepoTest(t)
+	defer mockDB.Close()
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO environment").WithArgs("test store")
@@ -21,37 +25,49 @@ func TestRepository_Create(t *testing.T) {
 
 	repo.Create(Environment{Name: "test store"})
 
-	assertExpectationsMet(mock, t)
+	test.AssertExpectationsMet(mock, t)
+}
+
+func TestNewRepository_GetByID(t *testing.T) {
+	mockDB, mock, repo := setupRepoTest(t)
+	defer mockDB.Close()
+
+	columns := []string{"id", "name"}
+	name := "test store"
+	mock.ExpectQuery("SELECT *").
+		WillReturnRows(sqlmock.NewRows(columns).
+			AddRow(1, name))
+
+	env, _ := repo.GetByID(1)
+
+	expect := &Environment{
+		ID:   1,
+		Name: name,
+	}
+
+	assert.Equal(t, expect, env)
+	test.AssertExpectationsMet(mock, t)
 }
 
 func TestRepository_GetByName(t *testing.T) {
-	mockDB, mock, sqlxDB := test.NewMockSqlxDB(t)
+	mockDB, mock, repo := setupRepoTest(t)
 	defer mockDB.Close()
 
-	repo := repository{
-		db: sqlxDB,
-	}
-
-	columns := []string{"name"}
-	expected := "test store"
-
+	columns := []string{"id", "name"}
+	name := "test store"
 	mock.ExpectQuery("SELECT *").
 		WillReturnRows(sqlmock.NewRows(columns).
-			AddRow(expected))
+			AddRow(1, name))
 
-	env, _ := repo.GetByName(expected)
-	if env.Name != expected {
-		t.Fatalf("expected: %s, got: %s", expected, env.Name)
+	env, _ := repo.GetByName(name)
+
+	expect := &Environment{
+		ID:   1,
+		Name: name,
 	}
 
-	assertExpectationsMet(mock, t)
-}
-
-func assertExpectationsMet(mock sqlmock.Sqlmock, t *testing.T) {
-	// ensure all expectations have been met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectation error: %s", err)
-	}
+	assert.Equal(t, expect, env)
+	test.AssertExpectationsMet(mock, t)
 }
 
 //func TestRepository_GetByName_Invalid(t *testing.T) {

@@ -11,7 +11,16 @@ func (r RepositoryMock) GetByName(name string) (*Environment, error) {
 	if name == "test" {
 		return &Environment{Name: "test"}, nil
 	} else {
-		return &Environment{}, errors.New("")
+		return &Environment{}, errors.New("name not found")
+	}
+
+}
+
+func (r RepositoryMock) GetByID(id int) (*Environment, error) {
+	if id == 1 {
+		return &Environment{ID: 1}, nil
+	} else {
+		return &Environment{}, errors.New("id not found")
 	}
 
 }

@@ -3,6 +3,7 @@ package environment
 import "github.com/jmoiron/sqlx"
 
 type repositoryManager interface {
+	GetByID(id int) (*Environment, error)
 	GetByName(name string) (*Environment, error)
 	Create(environment Environment) error
 }
@@ -20,6 +21,11 @@ func (r repository) Create(environment Environment) error {
 func (r repository) GetByName(name string) (*Environment, error) {
 	env := Environment{}
 	err := r.db.Get(&env, "SELECT * FROM environment WHERE name = $1", name)
+	return &env, err
+}
+func (r repository) GetByID(id int) (*Environment, error) {
+	env := Environment{}
+	err := r.db.Get(&env, "SELECT * FROM environment WHERE id = $1", id)
 	return &env, err
 }
 

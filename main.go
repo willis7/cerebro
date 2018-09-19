@@ -11,7 +11,7 @@ import (
 func main() {
 	// this Pings the database trying to connect, panics on error
 	// use sqlx.Open() for sql.Open() semantics
-	db, err := sqlx.Connect("postgres", "user=postgres dbname=bar sslmode=disable")
+	db, err := sqlx.Connect("postgres", "user=postgres dbname=cerebro sslmode=disable")
 	defer db.Close()
 	if err != nil {
 		log.Fatalln(err)

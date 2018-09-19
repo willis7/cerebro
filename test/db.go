@@ -17,3 +17,10 @@ func NewMockSqlxDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *sqlx.DB) {
 	sqlxDB.SetMaxOpenConns(10)
 	return mockDB, mock, sqlxDB
 }
+
+func AssertExpectationsMet(mock sqlmock.Sqlmock, t *testing.T) {
+	// ensure all expectations have been met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectation error: %s", err)
+	}
+}
