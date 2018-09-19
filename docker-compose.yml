@@ -1,0 +1,15 @@
+---
+version: '3'
+services:
+  postgres:
+    image: postgres:10.1-alpine
+    volumes:
+    - ./external/pgdata:/pgdata
+    # Export this on the usual port
+    ports:
+    - "5432:5432"
+    # These define the db name, user and password
+    environment:
+    - POSTGRES_USER=container
+    - POSTGRES_PASSWORD=container
+    - PGDATA=/pgdata

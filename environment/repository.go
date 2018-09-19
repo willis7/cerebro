@@ -1,23 +1,28 @@
 package environment
 
-type storer interface {
-	Persist(environment Environment) error
-	RetrieveByName(name string) (*Environment, error)
-}
+import "github.com/jmoiron/sqlx"
 
 type repositoryManager interface {
 	GetByName(name string) (*Environment, error)
-	Create(env Environment) error
+	Create(environment Environment) error
 }
 
 type repository struct {
-	store storer
+	db *sqlx.DB
+}
+
+func (r repository) Create(environment Environment) error {
+	tx := r.db.MustBegin()
+	tx.NamedExec("INSERT INTO environment (name) VALUES (:name)", environment)
+	return tx.Commit()
 }
 
 func (r repository) GetByName(name string) (*Environment, error) {
-	return r.store.RetrieveByName(name)
+	env := Environment{}
+	err := r.db.Get(&env, "SELECT * FROM environment WHERE name = $1", name)
+	return &env, err
 }
 
-func (r repository) Create(env Environment) error {
-	return nil
+func NewRepository(db *sqlx.DB) *repository {
+	return &repository{db: db}
 }

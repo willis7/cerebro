@@ -20,12 +20,10 @@ func (r RepositoryMock) Create(env Environment) error {
 	return nil
 }
 
-func TestService_GetByNameGetEnvironmentByName(t *testing.T) {
-	//	given a mock repository
-	repo := RepositoryMock{}
-	svc := New(repo)
+func TestService_GetEnvironmentByName(t *testing.T) {
+	mockR := RepositoryMock{}
+	svc := NewService(mockR)
 
-	//  when I call the service GetEnvironment method
 	actual, _ := svc.GetByName("test")
 	expected := "test"
 
@@ -36,8 +34,8 @@ func TestService_GetByNameGetEnvironmentByName(t *testing.T) {
 }
 
 func TestSevice_Create(t *testing.T) {
-	repo := RepositoryMock{}
-	svc := New(repo)
+	mockR := RepositoryMock{}
+	svc := NewService(mockR)
 	env := Environment{Name: "test create"}
 
 	actual := svc.Create(env)

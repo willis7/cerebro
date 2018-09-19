@@ -1,63 +1,69 @@
 package environment
 
 import (
-	"errors"
 	"testing"
+
+	"github.com/willis7/cerebro/test"
+	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
-type mockStore struct{}
+func TestRepository_Create(t *testing.T) {
+	mockDB, mock, sqlxDB := test.NewMockSqlxDB(t)
+	defer mockDB.Close()
 
-func (s mockStore) Persist(environment Environment) error {
-	return nil
-}
-
-func (s mockStore) RetrieveByName(name string) (*Environment, error) {
-	if name == "invalid" {
-		return &Environment{}, errors.New("environment not found")
-	} else {
-		return &Environment{Name: "test store"}, nil
-	}
-}
-
-func TestRepository_CreateCreate(t *testing.T) {
-	//	given a repository with a
-	m := mockStore{}
 	repo := repository{
-		store: m,
+		db: sqlxDB,
 	}
 
-	//	when I call the Create method
-	actual := repo.Create(Environment{})
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO environment").WithArgs("test store")
+	mock.ExpectCommit()
 
-	if actual != nil {
-		t.Fail()
-	}
+	repo.Create(Environment{Name: "test store"})
+
+	assertExpectationsMet(mock, t)
 }
 
 func TestRepository_GetByName(t *testing.T) {
-	store := mockStore{}
+	mockDB, mock, sqlxDB := test.NewMockSqlxDB(t)
+	defer mockDB.Close()
+
 	repo := repository{
-		store: store,
+		db: sqlxDB,
 	}
 
-	actual, _ := repo.GetByName("test store")
+	columns := []string{"name"}
 	expected := "test store"
 
-	if actual.Name != expected {
-		t.Fail()
+	mock.ExpectQuery("SELECT *").
+		WillReturnRows(sqlmock.NewRows(columns).
+			AddRow(expected))
+
+	env, _ := repo.GetByName(expected)
+	if env.Name != expected {
+		t.Fatalf("expected: %s, got: %s", expected, env.Name)
+	}
+
+	assertExpectationsMet(mock, t)
+}
+
+func assertExpectationsMet(mock sqlmock.Sqlmock, t *testing.T) {
+	// ensure all expectations have been met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectation error: %s", err)
 	}
 }
 
-func TestRepository_GetByName_Invalid(t *testing.T) {
-	store := mockStore{}
-	repo := repository{
-		store: store,
-	}
-
-	_, actual := repo.GetByName("invalid")
-	expected := errors.New("environment not found")
-
-	if actual.Error() != expected.Error() {
-		t.Fail()
-	}
-}
+//func TestRepository_GetByName_Invalid(t *testing.T) {
+//	store := mockStore{}
+//	repo := repository{
+//		db: store,
+//	}
+//
+//	_, actual := repo.GetByName("invalid")
+//	expected := errors.New("environment not found")
+//
+//	if actual.Error() != expected.Error() {
+//		t.Fail()
+//	}
+//}

@@ -4,7 +4,7 @@ type Service struct {
 	repo repositoryManager
 }
 
-func New(repo repositoryManager) *Service {
+func NewService(repo repositoryManager) *Service {
 	return &Service{
 		repo: repo,
 	}

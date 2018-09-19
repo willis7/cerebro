@@ -1,2 +1,6 @@
 .idea/
 *.iml
+coverage.html
+bin/
+
+vendor/
